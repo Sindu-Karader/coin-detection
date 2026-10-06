@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detect Coin</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Coin Detection</div>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/detect" class="active">Detect</a></li>
+        <li><a href="/coins">Coin Info</a></li>
+        <li><a href="/results">Results</a></li>
+        <li><a href="/login">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h2>Upload or Capture a Coin</h2>
+    
+    <!-- Upload option -->
+    <input type="file" id="coinInput" accept="image/*"><br><br>
+    
+    <!-- Camera preview -->
+    <video id="camera" autoplay playsinline style="width: 60%; border: 2px solid #444; border-radius: 10px;"></video>
+    <canvas id="snapshot" style="display: none;"></canvas>
+    <br>
+
+    <!-- Buttons -->
+    <button id="startCamera" type="button">📷 Start Camera</button>
+    <button id="captureBtn" type="button">📸 Capture Photo</button>
+    <button id="detectBtn" type="button">🔍 Detect Coin</button>
+
+    <!-- Result -->
+    <div id="result"></div>
+  </main>
+
+  <script>
+    /* detect.js inline: handles upload, capture, preview and POST to Flask */
+    const startCameraBtn = document.getElementById("startCamera");
+    const captureBtn = document.getElementById("captureBtn");
+    const detectBtn = document.getElementById("detectBtn");
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("snapshot");
+    const resultDiv = document.getElementById("result");
+    const fileInput = document.getElementById("coinInput"); // upload input
+    
+    let stream = null;
+    let lastFile = null; // File object to send
+    
+    // Start camera
+    startCameraBtn.addEventListener("click", async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.style.display = "block";
+      } catch (err) {
+        console.error("Camera error:", err);
+        alert("Cannot access camera: " + err.message);
+      }
+    });
+    
+    // Capture from camera -> convert to File and set lastFile
+    captureBtn.addEventListener("click", () => {
+      if (!stream) return alert("Start camera first.");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        const f = new File([blob], "captured.png", { type: "image/png" });
+        lastFile = f;
+        showPreview(URL.createObjectURL(f));
+      }, "image/png");
+    });
+    
+    // When user chooses a file from disk -> set lastFile and preview
+    fileInput.addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      lastFile = f;
+      showPreview(URL.createObjectURL(f));
+    });
+    
+    // Preview helper
+    function showPreview(src) {
+      resultDiv.innerHTML = `<div style="text-align:center;">
+          <h4>Preview</h4>
+          <img src="${src}" style="max-width:300px;border-radius:8px;border:1px solid #ccc;" />
+        </div>`;
+    }
+    
+    // Upload + detect (send to Flask)
+    detectBtn.addEventListener("click", async () => {
+      if (!lastFile) return alert("Please upload a file or capture a photo first.");
+    
+      const fd = new FormData();
+      fd.append("file", lastFile);
+    
+      resultDiv.innerHTML = "🔄 Sending image to server...";
+    
+      try {
+        const res = await fetch("http://127.0.0.1:5000/detect_coin", {
+          method: "POST",
+          body: fd
+        });
+    
+        // show raw status if not ok
+        if (!res.ok) {
+          const errBody = await res.json().catch(()=>null);
+          const errMsg = errBody?.error || `HTTP ${res.status}`;
+          resultDiv.innerHTML = `<p style="color:orange">Server returned error: ${errMsg}</p>`;
+          console.error("Server error", errMsg);
+          return;
+        }
+    
+        const data = await res.json();
+        // If backend returned an error JSON
+        if (data.error) {
+          resultDiv.innerHTML = `<p style="color:orange">Error: ${data.error}</p>`;
+          return;
+        }
+    
+        // Display prediction
+        resultDiv.innerHTML = `
+          <h3>Prediction</h3>
+          <p><b>Coin:</b> ${data.coin || 'Unknown'}</p>
+          <p><b>Confidence:</b> ${data.confidence ? (data.confidence*100).toFixed(2)+'%' : 'N/A'}</p>
+          <p><b>Year:</b> ${data.year || '—'}</p>
+          <p><b>Material:</b> ${data.material || '—'}</p>
+        `;
+      } catch (err) {
+        console.error("Fetch error:", err);
+        resultDiv.innerHTML = `<p style="color:red">Network or CORS error: ${err.message}</p>
+          <p>Open browser console and Flask terminal to see details.</p>`;
+      }
+    });
+    </script>
+    
+</body>
+</html>

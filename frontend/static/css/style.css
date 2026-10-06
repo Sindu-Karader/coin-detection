@@ -1,0 +1,70 @@
+/* Background color (dark green) */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #f5f5dc; /* cream text */
+    background: #013220; /* dark green */
+  }
+  
+  /* Navigation bar */
+  nav {
+    background: #022d1f; /* slightly darker green */
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  nav a {
+    color: #f5f5dc; /* cream */
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  nav a:hover {
+    color: #f9d342; /* gold highlight */
+  }
+  
+  /* Headings with gradient */
+  h1, h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    text-align: center;
+    background: linear-gradient(90deg, #f5f5dc, #f9d342, #e0e0d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: flowingText 6s infinite linear;
+  }
+  
+  /* Content cards */
+  .content {
+    background: rgba(255, 255, 255, 0.05); /* light cream tint */
+    padding: 25px;
+    margin: 30px auto;
+    border-radius: 15px;
+    backdrop-filter: blur(6px);
+    max-width: 800px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    color: #f5f5dc;
+  }
+  
+  /* Buttons */
+  button, .btn {
+    background: linear-gradient(45deg, #f9d342, #f5f5dc);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    color: #013220; /* dark green text */
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  button:hover, .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(249, 211, 66, 0.5);
+  }
+  
